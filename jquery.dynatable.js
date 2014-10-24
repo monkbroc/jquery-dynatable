@@ -48,6 +48,7 @@
       paginate: true,
       sort: true,
       pushState: true,
+      addToPushState: true,
       search: true,
       recordCount: true,
       perPageSelect: true
@@ -843,6 +844,7 @@
           cache,
           // replaceState on initial load, then pushState after that
           firstPush = !(window.history.state && window.history.state.dynatable),
+          addToPushState = (settings.features.addToPushState && window.history.state),
           pushFunction = firstPush ? 'replaceState' : 'pushState';
 
       if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
@@ -855,7 +857,14 @@
 
       obj.$element.trigger('dynatable:push', data);
 
-      cache = { dynatable: { dataset: settings.dataset } };
+      cache = {};
+      // Merge the existing pushState to the dynatable state for compatibility
+      // with popular navigation plugins like turbolinks and pjax
+      if (addToPushState) {
+        $.extend(cache, window.history.state);
+      }
+      cache.dynatable = { dataset: settings.dataset };
+
       if (!firstPush) { cache.dynatable.scrollTop = $(window).scrollTop(); }
       cacheStr = JSON.stringify(cache);
 
